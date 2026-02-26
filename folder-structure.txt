@@ -1,0 +1,72 @@
+├── README.md
+├── app
+│   ├── (legal)
+│   │   ├── privacy
+│   │   │   └── page.js
+│   │   └── terms
+│   │       └── page.js
+│   ├── api
+│   │   ├── intake
+│   │   │   └── route.js
+│   │   └── vehicle
+│   │       ├── makes
+│   │       │   └── route.js
+│   │       ├── models
+│   │       │   └── route.js
+│   │       └── trims
+│   │           └── route.js
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── intake
+│   │   ├── loading.js
+│   │   ├── page.js
+│   │   └── success
+│   │       └── page.js
+│   ├── layout.js
+│   └── page.js
+├── components
+│   ├── intake
+│   │   ├── BuyerIntakeForm.js
+│   │   ├── ContactSection.js
+│   │   ├── FinancingSection.js
+│   │   ├── ReviewSubmit.js
+│   │   ├── TradeInSection.js
+│   │   └── VehicleSelector.js
+│   ├── layout
+│   │   ├── Footer.js
+│   │   └── Header.js
+│   └── ui
+│       ├── Button.js
+│       ├── Field.js
+│       ├── FormError.js
+│       ├── Input.js
+│       ├── Select.js
+│       └── Spinner.js
+├── config
+│   └── env.md
+├── eslint.config.mjs
+├── folder-structure.txt
+├── jsconfig.json
+├── lib
+│   ├── airtable
+│   │   ├── client.js
+│   │   ├── intakeSubmit.js
+│   │   └── vehicleData.js
+│   ├── utils
+│   │   ├── normalize.js
+│   │   └── rateLimit.js
+│   └── validation
+│       └── intakeSchema.js
+├── next.config.mjs
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── public
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── scaffold-quotesignal.ps1
+└── testUtilFiles
+    └── printTree.mjs
