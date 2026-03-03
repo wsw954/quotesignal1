@@ -59,7 +59,7 @@
 │   │   ├── normalize.js
 │   │   └── rateLimit.js
 │   └── validation
-│       └── intakeSchema.js
+│       └── buyerIntakeSchema.js
 ├── next.config.mjs
 ├── package-lock.json
 ├── package.json
