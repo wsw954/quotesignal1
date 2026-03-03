@@ -7,16 +7,29 @@ import Input from "@/components/ui/Input";
 export default function ContactSection() {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <Field label="Full name" required>
-        <Input placeholder="John Smith" />
+      <Field label="First Name" required>
+        <Input name="First Name" placeholder="John" autoComplete="given-name" />
+      </Field>
+
+      <Field label="Last Name" required>
+        <Input
+          name="Last Name"
+          placeholder="Smith"
+          autoComplete="family-name"
+        />
       </Field>
 
       <Field label="Phone" required>
-        <Input placeholder="(555) 123-4567" />
+        <Input name="Phone" placeholder="(555) 123-4567" autoComplete="tel" />
       </Field>
 
-      <Field label="Email" className="sm:col-span-2" required>
-        <Input type="email" placeholder="you@example.com" />
+      <Field label="Email" required>
+        <Input
+          name="Email"
+          type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+        />
       </Field>
     </div>
   );
