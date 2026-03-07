@@ -1,31 +1,23 @@
 ﻿//app/intake/page.js
-import PageContainer from "@/components/ui/PageContainer";
 import BuyerIntakeForm from "@/components/intake/BuyerIntakeForm";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/Card";
+
+export const metadata = {
+  title: "Get Quotes | QuoteSignal",
+  description: "Start your request and select your vehicle details.",
+};
 
 export default function IntakePage() {
   return (
-    <main className="py-10">
-      <PageContainer>
-        <Card>
-          <CardHeader>
-            <CardTitle>Buyer Intake Form</CardTitle>
-            <CardDescription>
-              Build your request and we’ll collect competing dealer quotes.
-            </CardDescription>
-          </CardHeader>
+    <main className="mx-auto max-w-3xl px-4 py-10">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Get Dealer Quotes</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Start by selecting your vehicle. We will expand the full intake in the
+          next phase.
+        </p>
+      </div>
 
-          <CardContent>
-            <BuyerIntakeForm />
-          </CardContent>
-        </Card>
-      </PageContainer>
+      <BuyerIntakeForm />
     </main>
   );
 }

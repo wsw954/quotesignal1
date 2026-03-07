@@ -2,48 +2,36 @@
 import { NextResponse } from "next/server";
 import { buyerIntakeSchema } from "@/lib/validation/buyerIntakeSchema";
 import { createBuyerRequest } from "@/lib/airtable/intakeSubmit";
+import { requiresCreditScoreRange } from "@/lib/constants/creditScoreRanges";
 
-export const dynamic = "force-dynamic";
-
-export async function POST(req) {
+export async function POST(request) {
   try {
-    let body;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json(
-        { ok: false, error: "Invalid JSON body." },
-        { status: 400 },
-      );
-    }
-
-    // Zod-style validation (recommended in your roadmap)
+    const body = await request.json();
     const parsed = buyerIntakeSchema.safeParse(body);
+
     if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
       return NextResponse.json(
-        {
-          ok: false,
-          error: "Validation failed.",
-          details: parsed.error.flatten(),
-        },
+        { ok: false, error: firstIssue?.message || "Invalid request." },
         { status: 400 },
       );
     }
 
-    const result = await createBuyerRequest(parsed.data);
+    const data = parsed.data;
 
-    // Normalize a requestId no matter what your data-layer returns
-    const requestId =
-      result?.id ?? result?.recordId ?? result?.requestId ?? null;
+    const payload = {
+      ...data,
+      creditScoreRange: requiresCreditScoreRange(data.purchaseType)
+        ? data.creditScoreRange
+        : "",
+    };
 
+    const created = await createBuyerRequest(payload);
+
+    return NextResponse.json({ ok: true, data: created }, { status: 201 });
+  } catch (error) {
     return NextResponse.json(
-      { ok: true, data: { requestId, result } },
-      { status: 200 },
-    );
-  } catch (err) {
-    console.error("[POST /api/intake]", err);
-    return NextResponse.json(
-      { ok: false, error: "Failed to submit intake." },
+      { ok: false, error: error.message || "Internal server error." },
       { status: 500 },
     );
   }
