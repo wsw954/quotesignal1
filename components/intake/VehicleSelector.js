@@ -1,9 +1,32 @@
-﻿//components/intake/VehicleSelector.js
+﻿// components/intake/VehicleSelector.js
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 
-export default function VehicleSelector({ form, setForm }) {
+const YEAR_OPTIONS = [
+  "2026",
+  "2025",
+  "2024",
+  "2023",
+  "2022",
+  "2021",
+  "2020",
+  "2019",
+  "2018",
+  "2017",
+  "2016",
+  "2015",
+  "2014",
+  "Not Sure",
+];
+
+function fieldClass(hasError) {
+  return `w-full rounded-lg border px-3 py-2 text-sm ${
+    hasError ? "border-red-500" : ""
+  }`;
+}
+
+export default function VehicleSelector({ form, setForm, errors = {} }) {
   const [makes, setMakes] = useState([]);
   const [models, setModels] = useState([]);
   const [trims, setTrims] = useState([]);
@@ -52,6 +75,15 @@ export default function VehicleSelector({ form, setForm }) {
       isMounted = false;
     };
   }, []);
+
+  function handleSimpleChange(event) {
+    const { name, value } = event.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
 
   async function handleMakeChange(event) {
     const nextMakeId = event.target.value;
@@ -172,7 +204,7 @@ export default function VehicleSelector({ form, setForm }) {
       <div>
         <h2 className="text-lg font-semibold">Vehicle Selection</h2>
         <p className="mt-1 text-sm text-gray-600">
-          Select make, model, and trim in order.
+          Select the year, make, model, and trim in order.
         </p>
       </div>
 
@@ -182,18 +214,43 @@ export default function VehicleSelector({ form, setForm }) {
         </div>
       ) : null}
 
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <label htmlFor="year" className="block text-sm font-medium">
+            Year <span className="text-red-600">*</span>
+          </label>
+          <select
+            id="year"
+            name="year"
+            value={form.year || ""}
+            onChange={handleSimpleChange}
+            className={fieldClass(Boolean(errors.year))}
+          >
+            <option value="">Select year</option>
+            {YEAR_OPTIONS.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+          {errors.year ? (
+            <p className="text-xs text-red-600">{errors.year}</p>
+          ) : null}
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-3">
         <div className="space-y-2">
           <label htmlFor="makeId" className="block text-sm font-medium">
-            Make
+            Make <span className="text-red-600">*</span>
           </label>
           <select
             id="makeId"
             name="makeId"
-            value={form.makeId}
+            value={form.makeId || ""}
             onChange={handleMakeChange}
             disabled={loadingMakes}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
+            className={fieldClass(Boolean(errors.makeId))}
           >
             <option value="">
               {loadingMakes ? "Loading makes..." : "Select make"}
@@ -207,19 +264,22 @@ export default function VehicleSelector({ form, setForm }) {
           {!loadingMakes && makes.length === 0 ? (
             <p className="text-xs text-gray-500">No makes found.</p>
           ) : null}
+          {errors.makeId ? (
+            <p className="text-xs text-red-600">{errors.makeId}</p>
+          ) : null}
         </div>
 
         <div className="space-y-2">
           <label htmlFor="modelId" className="block text-sm font-medium">
-            Model
+            Model <span className="text-red-600">*</span>
           </label>
           <select
             id="modelId"
             name="modelId"
-            value={form.modelId}
+            value={form.modelId || ""}
             onChange={handleModelChange}
             disabled={!form.makeId || loadingModels}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
+            className={fieldClass(Boolean(errors.modelId))}
           >
             <option value="">
               {!form.makeId
@@ -237,19 +297,22 @@ export default function VehicleSelector({ form, setForm }) {
           {form.makeId && !loadingModels && models.length === 0 ? (
             <p className="text-xs text-gray-500">No models found.</p>
           ) : null}
+          {errors.modelId ? (
+            <p className="text-xs text-red-600">{errors.modelId}</p>
+          ) : null}
         </div>
 
         <div className="space-y-2">
           <label htmlFor="trimId" className="block text-sm font-medium">
-            Trim
+            Trim <span className="text-red-600">*</span>
           </label>
           <select
             id="trimId"
             name="trimId"
-            value={form.trimId}
+            value={form.trimId || ""}
             onChange={handleTrimChange}
             disabled={!form.modelId || loadingTrims}
-            className="w-full rounded-lg border px-3 py-2 text-sm"
+            className={fieldClass(Boolean(errors.trimId))}
           >
             <option value="">
               {!form.modelId
@@ -266,6 +329,50 @@ export default function VehicleSelector({ form, setForm }) {
           </select>
           {form.modelId && !loadingTrims && trims.length === 0 ? (
             <p className="text-xs text-gray-500">No trims found.</p>
+          ) : null}
+          {errors.trimId ? (
+            <p className="text-xs text-red-600">{errors.trimId}</p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="grid gap-4">
+        <div className="space-y-2">
+          <label
+            htmlFor="trimNotesPackages"
+            className="block text-sm font-medium"
+          >
+            Trim Notes / Packages
+          </label>
+          <textarea
+            id="trimNotesPackages"
+            name="trimNotesPackages"
+            value={form.trimNotesPackages || ""}
+            onChange={handleSimpleChange}
+            rows={3}
+            placeholder="Optional: Trim Details/Notes."
+            className={fieldClass(Boolean(errors.trimNotesPackages))}
+          />
+          {errors.trimNotesPackages ? (
+            <p className="text-xs text-red-600">{errors.trimNotesPackages}</p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="accessories" className="block text-sm font-medium">
+            Accessories
+          </label>
+          <textarea
+            id="accessories"
+            name="accessories"
+            value={form.accessories || ""}
+            onChange={handleSimpleChange}
+            rows={4}
+            placeholder="Optional: preferred accessories, packages, or must-have features."
+            className={fieldClass(Boolean(errors.accessories))}
+          />
+          {errors.accessories ? (
+            <p className="text-xs text-red-600">{errors.accessories}</p>
           ) : null}
         </div>
       </div>
