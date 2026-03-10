@@ -15,7 +15,9 @@ export default function HomePage() {
         <div className="space-y-10">
           {/* Hero */}
           <div className="space-y-4">
-            <p className="text-sm font-medium text-slate-600">QuoteSignal</p>
+            <p className="text-sm font-medium text-slate-600">
+              QuoteSignal Preview
+            </p>
 
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               Get competing dealer quotes without the hassle.
