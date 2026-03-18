@@ -23,8 +23,10 @@ const DEFAULT_REQUEST_STATUS =
 const DEFAULT_PAYMENT_STATUS =
   process.env.INTAKE_DEFAULT_PAYMENT_STATUS || "Unpaid";
 const DEFAULT_PRIORITY = process.env.INTAKE_DEFAULT_PRIORITY || "Normal";
-const DEFAULT_CURRENT_ROUND = process.env.INTAKE_DEFAULT_CURRENT_ROUND || "R1";
-const DEFAULT_DEALER_CAP = Number(process.env.INTAKE_DEFAULT_DEALER_CAP ?? 7);
+const DEFAULT_ROUND_NUMBER = process.env.INTAKE_DEFAULT_ROUND_NUMBER || "R1";
+const DEFAULT_TARGET_DEALER_COUNT = Number(
+  process.env.INTAKE_DEFAULT_TARGET_DEALER_COUNT ?? 7,
+);
 const DEFAULT_DEALER_TIER_MAX = Number(
   process.env.INTAKE_DEFAULT_DEALER_TIER_MAX ?? 1,
 );
@@ -103,49 +105,6 @@ async function findZipRouting(zip) {
     region: cleanLookupValue(fields[F_ZIP_SOURCE_REGION]),
   };
 }
-
-//Alternate version
-// async function findZipRouting(zip) {
-//   // We use OR to check if the ZIP is stored as a String ("33351") or a Number (33351).
-//   // This is the most resilient way to query Airtable for numeric-string fields.
-//   const formula = `OR({${F_ZIP_SOURCE_ZIP}} = "${zip}", {${F_ZIP_SOURCE_ZIP}} = ${Number(zip)})`;
-
-//   const records = await base.safeSelect(T_ZIP_CODES, {
-//     filterByFormula: formula,
-//     fields: [F_ZIP_SOURCE_ZIP, F_ZIP_SOURCE_STATE, F_ZIP_SOURCE_REGION],
-//     maxRecords: 1,
-//   });
-
-//   if (!Array.isArray(records) || records.length === 0) {
-//     // --- DEBUGGING STEP ---
-//     // If we still get 0 records, let's peek at the first record in the table
-//     // to see exactly what the fields are named and what the data looks like.
-//     const sample = await base.safeSelect(T_ZIP_CODES, { maxRecords: 1 });
-//     if (sample && sample.length > 0) {
-//       const firstRecord = sample[0].fields ?? sample[0];
-//       console.log(
-//         "DEBUG: ZIP not found. First record in table fields:",
-//         Object.keys(firstRecord),
-//       );
-//       console.log(
-//         "DEBUG: First record ZIP value:",
-//         firstRecord[F_ZIP_SOURCE_ZIP],
-//       );
-//     } else {
-//       console.log("DEBUG: The table 'Zip Codes (Synced)' appears to be empty.");
-//     }
-//     // -----------------------
-//     return null;
-//   }
-
-//   const match = records[0];
-//   const fields = match?.fields ?? match ?? {};
-
-//   return {
-//     buyerState: cleanLookupValue(fields[F_ZIP_SOURCE_STATE]),
-//     region: cleanLookupValue(fields[F_ZIP_SOURCE_REGION]),
-//   };
-// }
 
 export async function POST(request) {
   try {
@@ -227,9 +186,9 @@ export async function POST(request) {
       paymentStatus: DEFAULT_PAYMENT_STATUS,
       paymentUnlocked: false,
       priority: DEFAULT_PRIORITY,
-      currentRound: DEFAULT_CURRENT_ROUND,
+      roundNumber: DEFAULT_ROUND_NUMBER,
       r1Sent: false,
-      dealerCap: DEFAULT_DEALER_CAP,
+      targetDealerCount: DEFAULT_TARGET_DEALER_COUNT,
       dealerTierMax: DEFAULT_DEALER_TIER_MAX,
     };
 
