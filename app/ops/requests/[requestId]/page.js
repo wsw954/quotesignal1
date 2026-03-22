@@ -3,19 +3,17 @@
 import { notFound } from "next/navigation";
 
 import { getRequestData } from "@/lib/airtable/requestData";
-import { getDealerSelectionPreview } from "@/lib/airtable/dealerData";
+import { getDealerSelectionPreview } from "@/lib/workflow/applyDealerSelectionRules";
 import { getInvitationData } from "@/lib/airtable/invitationData";
-import { getWorkflowSnapshot } from "@/lib/airtable/workflowActions"; //Phase 3 final Test
 
 import RequestWorkflowHeader from "@/components/ops/RequestWorkflowHeader";
 import DealerSelectionPanel from "@/components/ops/DealerSelectionPanel";
 import DealerMatchTable from "@/components/ops/DealerMatchTable";
 import InvitationStatusTable from "@/components/ops/InvitationStatusTable";
-import ManualOverridePanel from "@/components/ops/ManualOverridePanel";
 import SendRfqPanel from "@/components/ops/SendRfqPanel";
 import Round2SelectionPanel from "@/components/ops/Round2SelectionPanel";
 
-function buildPhase3PlaceholderData(requestData) {
+function buildPendingSectionData(requestData) {
   return {
     invitations: {
       total: requestData?.links?.requestDealerRecordIds?.length || 0,
@@ -42,6 +40,81 @@ function DetailRow({ label, value }) {
       </span>
       <span className="text-sm text-gray-900">{value || "—"}</span>
     </div>
+  );
+}
+
+function ManualSelectionStatusNote({ requestData, dealerSelection }) {
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">
+          Manual Selection Status
+        </h2>
+        <p className="text-sm text-gray-600">
+          Phase 4 supports manual include and manual exclude logic in the
+          backend selection engine, but operator controls are not exposed in the
+          page yet.
+        </p>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            Request
+          </p>
+          <p className="mt-2 text-sm font-medium text-gray-900">
+            {requestData?.requestId || "—"}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            Manual Include Count
+          </p>
+          <p className="mt-2 text-sm font-medium text-gray-900">
+            {dealerSelection?.manualIncludeDealerIds?.length ?? 0}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            Manual Exclude Count
+          </p>
+          <p className="mt-2 text-sm font-medium text-gray-900">
+            {dealerSelection?.manualExcludeDealerIds?.length ?? 0}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
+        <p className="text-sm text-blue-900">
+          The current operator page reflects backend selection outcomes only.
+          Manual controls can be added later without changing the Phase 4
+          selection engine.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function EmptyDealerMatchState({ requestId }) {
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">
+          Dealer Match Table
+        </h2>
+        <p className="text-sm text-gray-600">
+          Candidate dealer review surface for {requestId || "—"}.
+        </p>
+        <p className="mt-1 text-xs text-gray-500">Mode: phase4-live</p>
+      </div>
+
+      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-600">
+        No candidate dealers matched the current selection rules for this
+        Request.
+      </div>
+    </section>
   );
 }
 
@@ -85,17 +158,19 @@ export default async function OpsRequestWorkflowPage({ params }) {
     );
   }
 
-  const placeholderData = buildPhase3PlaceholderData(requestData);
+  const pendingSectionData = buildPendingSectionData(requestData);
   const dealerSelection = await getDealerSelectionPreview(requestData);
   const invitations = await getInvitationData(requestData);
-  const workflowSnapshot = await getWorkflowSnapshot(requestData);
 
   const pageData = {
     request: requestData,
     dealerSelection,
     invitations,
-    round2: placeholderData.round2,
+    round2: pendingSectionData.round2,
   };
+
+  const hasCandidateDealers =
+    (pageData.dealerSelection?.candidates?.length ?? 0) > 0;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
@@ -209,107 +284,6 @@ export default async function OpsRequestWorkflowPage({ params }) {
           </div>
         </section>
 
-        <section className="rounded-xl border border-blue-200 bg-blue-50 p-5">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-blue-900">
-              Workflow Snapshot Smoke Test
-            </h2>
-            <p className="text-sm text-blue-800">
-              Temporary read-only debug panel for workflowActions.js
-            </p>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <DetailRow
-              label="Snapshot Request ID"
-              value={workflowSnapshot.requestData?.requestId || "—"}
-            />
-            <DetailRow
-              label="Current Round"
-              value={workflowSnapshot.currentRound || "—"}
-            />
-            <DetailRow
-              label="Candidate Count"
-              value={String(workflowSnapshot.counts?.candidateCount ?? 0)}
-            />
-            <DetailRow
-              label="Invitation Count"
-              value={String(workflowSnapshot.counts?.invitationCount ?? 0)}
-            />
-            <DetailRow
-              label="Ready Invitations"
-              value={String(workflowSnapshot.counts?.readyInvitationCount ?? 0)}
-            />
-            <DetailRow
-              label="Sent Invitations"
-              value={String(workflowSnapshot.counts?.sentInvitationCount ?? 0)}
-            />
-            <DetailRow
-              label="Quoted Invitations"
-              value={String(
-                workflowSnapshot.counts?.quotedInvitationCount ?? 0,
-              )}
-            />
-            <DetailRow
-              label="Pending Dealer Review"
-              value={String(
-                workflowSnapshot.counts?.pendingDealerReviewCount ?? 0,
-              )}
-            />
-          </div>
-
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <DetailRow
-              label="Can Mark Needs Review"
-              value={workflowSnapshot.gates?.canMarkNeedsReview ? "Yes" : "No"}
-            />
-            <DetailRow
-              label="Can Mark Ready For Invitations"
-              value={
-                workflowSnapshot.gates?.canMarkReadyForInvitations
-                  ? "Yes"
-                  : "No"
-              }
-            />
-            <DetailRow
-              label="Can Mark No Eligible Dealers"
-              value={
-                workflowSnapshot.gates?.canMarkNoEligibleDealers ? "Yes" : "No"
-              }
-            />
-            <DetailRow
-              label="Can Generate Invitations"
-              value={
-                workflowSnapshot.gates?.canGenerateInvitations ? "Yes" : "No"
-              }
-            />
-            <DetailRow
-              label="Can Send Round 1"
-              value={workflowSnapshot.gates?.canSendRound1 ? "Yes" : "No"}
-            />
-            <DetailRow
-              label="Can Send Round 2"
-              value={workflowSnapshot.gates?.canSendRound2 ? "Yes" : "No"}
-            />
-            <DetailRow
-              label="Can Mark Buyer Review Ready"
-              value={
-                workflowSnapshot.gates?.canMarkBuyerReviewReady ? "Yes" : "No"
-              }
-            />
-            <DetailRow
-              label="Can Release Dealer Review"
-              value={
-                workflowSnapshot.gates?.canReleaseDealerReview ? "Yes" : "No"
-              }
-            />
-            <DetailRow
-              label="Can Close Request"
-              value={workflowSnapshot.gates?.canCloseRequest ? "Yes" : "No"}
-            />
-          </div>
-        </section>
-
         <DealerSelectionPanel
           requestData={requestData}
           dealerSelection={pageData.dealerSelection}
@@ -318,13 +292,17 @@ export default async function OpsRequestWorkflowPage({ params }) {
           excluded={pageData.dealerSelection.excluded}
         />
 
-        <DealerMatchTable
-          requestData={requestData}
-          dealers={pageData.dealerSelection.candidates}
-          selectedDealers={pageData.dealerSelection.selected}
-          excludedDealers={pageData.dealerSelection.excluded}
-          mode="phase3-live"
-        />
+        {hasCandidateDealers ? (
+          <DealerMatchTable
+            requestData={requestData}
+            dealers={pageData.dealerSelection.candidates}
+            selectedDealers={pageData.dealerSelection.selected}
+            excludedDealers={pageData.dealerSelection.excluded}
+            mode="phase4-live"
+          />
+        ) : (
+          <EmptyDealerMatchState requestId={requestData.requestId} />
+        )}
 
         <InvitationStatusTable
           requestData={requestData}
@@ -332,10 +310,9 @@ export default async function OpsRequestWorkflowPage({ params }) {
           invitations={pageData.invitations.rows}
         />
 
-        <ManualOverridePanel
+        <ManualSelectionStatusNote
           requestData={requestData}
           dealerSelection={pageData.dealerSelection}
-          disabled
         />
 
         <SendRfqPanel
