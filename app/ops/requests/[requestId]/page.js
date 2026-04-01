@@ -163,6 +163,13 @@ function ActionResultBanner({ flash }) {
 
   const isSuccess = flash.status === "ok";
 
+  const eyebrow =
+    flash.phase === "phase6"
+      ? "Round 1 Send Ready Result"
+      : flash.action === "ready"
+        ? "Invitation Prep Result"
+        : "Invitation Creation Result";
+
   return (
     <section
       className={`rounded-2xl border p-5 shadow-sm ${
@@ -178,9 +185,7 @@ function ActionResultBanner({ flash }) {
               isSuccess ? "text-emerald-700" : "text-red-700"
             }`}
           >
-            {flash.action === "ready"
-              ? "Invitation Prep Result"
-              : "Invitation Creation Result"}
+            {eyebrow}
           </p>
 
           <h2
@@ -192,7 +197,49 @@ function ActionResultBanner({ flash }) {
           </h2>
         </div>
 
-        {flash.action === "generate" && isSuccess ? (
+        {flash.phase === "phase6" && isSuccess ? (
+          <div className="grid gap-3 md:grid-cols-4">
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Ready Rows
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.readyCount}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Intro Template
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.introCount}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Standard Template
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.standardCount}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Template Backfills
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.templateBackfillCount}
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {flash.phase === "phase5" &&
+        flash.action === "generate" &&
+        isSuccess ? (
           <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-xl border border-white/70 bg-white/70 p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -232,7 +279,7 @@ function ActionResultBanner({ flash }) {
           </div>
         ) : null}
 
-        {flash.action === "ready" && isSuccess ? (
+        {flash.phase === "phase5" && flash.action === "ready" && isSuccess ? (
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-xl border border-white/70 bg-white/70 p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -437,6 +484,24 @@ function InvitationActionsPanel({ requestData, workflowSnapshot }) {
 }
 
 function buildFlashState(searchParams) {
+  const phase6Action = readParam(searchParams?.phase6Action);
+  const phase6Status = readParam(searchParams?.phase6Status);
+
+  if (phase6Action && phase6Status) {
+    return {
+      phase: "phase6",
+      action: phase6Action,
+      status: phase6Status,
+      message: readParam(searchParams?.phase6Message) || "Action completed",
+      readyCount: Number(readParam(searchParams?.readyCount) || 0),
+      introCount: Number(readParam(searchParams?.introCount) || 0),
+      standardCount: Number(readParam(searchParams?.standardCount) || 0),
+      templateBackfillCount: Number(
+        readParam(searchParams?.templateBackfillCount) || 0,
+      ),
+    };
+  }
+
   const action = readParam(searchParams?.phase5Action);
   const status = readParam(searchParams?.phase5Status);
 
@@ -445,6 +510,7 @@ function buildFlashState(searchParams) {
   }
 
   return {
+    phase: "phase5",
     action,
     status,
     message: readParam(searchParams?.phase5Message) || "Action completed",
@@ -674,7 +740,10 @@ export default async function OpsRequestWorkflowPage({ params, searchParams }) {
           requestData={requestData}
           invitationSummary={pageData.invitations}
           workflow={requestData.workflow}
-          disabled={pageData.invitations.total < 1}
+          currentRound={workflowSnapshot.currentRound}
+          canSendRound1={workflowSnapshot.gates.canSendRound1}
+          canSendRound2={workflowSnapshot.gates.canSendRound2}
+          disabled={false}
         />
 
         <Round2SelectionPanel

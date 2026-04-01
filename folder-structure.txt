@@ -19,6 +19,8 @@
 │   │   │   └── [requestId]
 │   │   │       ├── dealer-selection
 │   │   │       │   └── route.js
+│   │   │       ├── finalize-round1-send
+│   │   │       │   └── route.js
 │   │   │       ├── invitations
 │   │   │       │   └── route.js
 │   │   │       ├── release-dealer-review
