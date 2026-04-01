@@ -24,9 +24,13 @@ function badRequest(message) {
   return NextResponse.json({ ok: false, error: message }, { status: 400 });
 }
 
+function normalizeSecret(value) {
+  return String(value || "").trim();
+}
+
 function isAuthorized(request) {
-  const expected = process.env.WORKFLOW_INTERNAL_SECRET || "";
-  const received = request.headers.get("x-workflow-secret") || "";
+  const expected = normalizeSecret(process.env.WORKFLOW_INTERNAL_SECRET);
+  const received = normalizeSecret(request.headers.get("x-workflow-secret"));
   return Boolean(expected) && received === expected;
 }
 
