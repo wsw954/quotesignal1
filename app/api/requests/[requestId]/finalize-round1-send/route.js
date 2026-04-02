@@ -28,6 +28,19 @@ function normalizeSecret(value) {
   return String(value || "").trim();
 }
 
+function getAuthDebug(request) {
+  const expected = normalizeSecret(process.env.WORKFLOW_INTERNAL_SECRET);
+  const received = normalizeSecret(request.headers.get("x-workflow-secret"));
+
+  return {
+    hasExpected: Boolean(expected),
+    hasReceived: Boolean(received),
+    expectedLength: expected.length,
+    receivedLength: received.length,
+    matches: received === expected,
+  };
+}
+
 function isAuthorized(request) {
   const expected = normalizeSecret(process.env.WORKFLOW_INTERNAL_SECRET);
   const received = normalizeSecret(request.headers.get("x-workflow-secret"));
@@ -49,6 +62,15 @@ function areAllRound1SelectedRowsSent(rows = []) {
 }
 
 export async function POST(request, { params }) {
+  const auth = getAuthDebug(request);
+
+  if (!auth.matches) {
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized", auth },
+      { status: 401 },
+    );
+  }
+
   if (!isAuthorized(request)) {
     return unauthorized();
   }
