@@ -77,8 +77,6 @@
 │   ├── dealer
 │   │   ├── DealerQuoteForm.js
 │   │   ├── DealerQuoteHeader.js
-│   │   ├── QuoteComplianceSection.js
-│   │   ├── QuoteFeeSection.js
 │   │   ├── QuoteLeaseSection.js
 │   │   ├── QuotePricingSection.js
 │   │   └── QuoteReviewSubmit.js

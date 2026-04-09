@@ -24,6 +24,7 @@ const initialForm = {
   modelName: "",
   trimId: "",
   trimName: "",
+  exteriorColorRequested: "",
   trimNotesPackages: "",
   accessories: "",
 

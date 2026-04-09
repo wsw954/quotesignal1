@@ -654,6 +654,10 @@ export default async function OpsRequestWorkflowPage({ params, searchParams }) {
               value={requestData.vehicle.vehicleSpec || "—"}
             />
             <DetailRow
+              label="Exterior Color Requested"
+              value={requestData.vehicle.exteriorColorRequested || "—"}
+            />
+            <DetailRow
               label="Purchase Type"
               value={requestData.request.purchaseTypeRequested || "—"}
             />

@@ -20,6 +20,18 @@ const YEAR_OPTIONS = [
   "Not Sure",
 ];
 
+const EXTERIOR_COLOR_OPTIONS = [
+  "Black",
+  "White",
+  "Silver",
+  "Blue",
+  "Red",
+  "Green",
+  "Grey",
+  "Other",
+  "Any",
+];
+
 function fieldClass(hasError) {
   return `w-full rounded-lg border px-3 py-2 text-sm ${
     hasError ? "border-red-500" : ""
@@ -235,6 +247,34 @@ export default function VehicleSelector({ form, setForm, errors = {} }) {
           </select>
           {errors.year ? (
             <p className="text-xs text-red-600">{errors.year}</p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <label
+            htmlFor="exteriorColorRequested"
+            className="block text-sm font-medium"
+          >
+            Exterior Color Requested
+          </label>
+          <select
+            id="exteriorColorRequested"
+            name="exteriorColorRequested"
+            value={form.exteriorColorRequested || ""}
+            onChange={handleSimpleChange}
+            className={fieldClass(Boolean(errors.exteriorColorRequested))}
+          >
+            <option value="">Select exterior color</option>
+            {EXTERIOR_COLOR_OPTIONS.map((color) => (
+              <option key={color} value={color}>
+                {color}
+              </option>
+            ))}
+          </select>
+          {errors.exteriorColorRequested ? (
+            <p className="text-xs text-red-600">
+              {errors.exteriorColorRequested}
+            </p>
           ) : null}
         </div>
       </div>

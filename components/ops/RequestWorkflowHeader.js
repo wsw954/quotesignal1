@@ -39,6 +39,7 @@ export default function RequestWorkflowHeader({
   const requestId = requestData?.requestId || "—";
   const buyerName = buyer?.fullName || "—";
   const vehicleSpec = vehicle?.vehicleSpec || "—";
+  const exteriorColorRequested = vehicle?.exteriorColorRequested || "—";
   const requestStatus = workflow?.requestStatus || "—";
   const dealerSelectionStatus = workflow?.dealerSelectionStatus || "—";
   const roundNumber = workflow?.roundNumber || "R1";
@@ -56,6 +57,9 @@ export default function RequestWorkflowHeader({
               {requestId}
             </h2>
             <p className="mt-2 text-sm text-gray-600">{vehicleSpec}</p>
+            <p className="mt-1 text-sm text-gray-600">
+              Exterior Color Requested: {exteriorColorRequested}
+            </p>
             <p className="mt-1 text-sm text-gray-600">Buyer: {buyerName}</p>
           </div>
 
