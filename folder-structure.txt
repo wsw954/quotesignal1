@@ -23,6 +23,8 @@
 │   │   │       │   └── route.js
 │   │   │       ├── invitations
 │   │   │       │   └── route.js
+│   │   │       ├── mark-invitation-sent
+│   │   │       │   └── route.js
 │   │   │       ├── release-dealer-review
 │   │   │       │   └── route.js
 │   │   │       ├── send-round1
@@ -79,7 +81,8 @@
 │   │   ├── DealerQuoteHeader.js
 │   │   ├── QuoteLeaseSection.js
 │   │   ├── QuotePricingSection.js
-│   │   └── QuoteReviewSubmit.js
+│   │   ├── QuoteReviewSubmit.js
+│   │   └── QuoteVehicleSection.js
 │   ├── intake
 │   │   ├── BuyerIntakeForm.js
 │   │   ├── ContactSection.js

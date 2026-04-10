@@ -5,6 +5,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import VehicleSelector from "@/components/intake/VehicleSelector";
+import QuoteVehicleSection from "@/components/dealer/QuoteVehicleSection";
 import QuotePricingSection from "@/components/dealer/QuotePricingSection";
 import QuoteLeaseSection from "@/components/dealer/QuoteLeaseSection";
 import QuoteReviewSubmit from "@/components/dealer/QuoteReviewSubmit";
@@ -51,6 +52,7 @@ function buildInitialForm({ requestedVehicle }) {
     modelName: "",
     trimId: "",
     trimName: "",
+    exteriorColor: "",
     trimNotesPackages: "",
     accessories: "",
 
@@ -178,6 +180,12 @@ export default function DealerQuoteForm({
         description="Select the actual vehicle you are offering. It may differ from the requested vehicle, but the purchase structure must match the buyer request."
       >
         <VehicleSelector form={form} setForm={setForm} errors={errors} />
+
+        <QuoteVehicleSection
+          form={form}
+          errors={errors}
+          onChange={handleChange}
+        />
       </SectionCard>
 
       <QuotePricingSection
