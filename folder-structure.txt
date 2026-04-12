@@ -82,7 +82,8 @@
 │   │   ├── QuoteLeaseSection.js
 │   │   ├── QuotePricingSection.js
 │   │   ├── QuoteReviewSubmit.js
-│   │   └── QuoteVehicleSection.js
+│   │   ├── QuoteVehicleSection.js
+│   │   └── SubmittedQuoteSummary.js
 │   ├── intake
 │   │   ├── BuyerIntakeForm.js
 │   │   ├── ContactSection.js

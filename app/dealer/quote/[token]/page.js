@@ -3,6 +3,7 @@
 import { getDealerQuoteInvitationByToken } from "@/lib/airtable/dealerQuoteSubmit";
 import DealerQuoteForm from "@/components/dealer/DealerQuoteForm";
 import DealerQuoteHeader from "@/components/dealer/DealerQuoteHeader";
+import SubmittedQuoteSummary from "@/components/dealer/SubmittedQuoteSummary";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +95,7 @@ export default async function DealerQuotePage({ params }) {
 
   const purchaseType = requestContext?.purchaseType || "—";
   const roundNumber = invitation?.roundNumber || "R1";
+  const hasSubmittedQuote = Boolean(existingQuote);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -109,6 +111,7 @@ export default async function DealerQuotePage({ params }) {
             roundNumber={roundNumber}
             purchaseType={purchaseType}
             dealerResponseStatus={invitation?.dealerResponseStatus}
+            hasSubmittedQuote={hasSubmittedQuote}
           />
         </div>
 
@@ -168,11 +171,20 @@ export default async function DealerQuotePage({ params }) {
 
           <div className="space-y-6">
             <SectionCard title="Dealer Quote Submission">
-              {existingQuote ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                  A quote is already linked to this invitation. Under the
-                  current v1 workflow, dealers may submit only one quote per
-                  request per round.
+              {hasSubmittedQuote ? (
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    A quote has already been submitted for this invitation.
+                    Under the current v1 workflow, dealers may submit only one
+                    quote per request per round. Your previously submitted quote
+                    is shown below.
+                  </div>
+
+                  <SubmittedQuoteSummary
+                    existingQuote={existingQuote}
+                    purchaseType={purchaseType}
+                    roundNumber={roundNumber}
+                  />
                 </div>
               ) : (
                 <>

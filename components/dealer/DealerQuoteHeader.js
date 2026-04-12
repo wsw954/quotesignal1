@@ -1,8 +1,13 @@
 // components/dealer/DealerQuoteHeader.js
 
-function InfoNote({ children }) {
+function InfoNote({ tone = "blue", children }) {
+  const toneClasses =
+    tone === "amber"
+      ? "border-amber-200 bg-amber-50 text-amber-900"
+      : "border-blue-200 bg-blue-50 text-blue-900";
+
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+    <div className={`rounded-lg border px-4 py-3 text-sm ${toneClasses}`}>
       {children}
     </div>
   );
@@ -25,6 +30,7 @@ export default function DealerQuoteHeader({
   roundNumber,
   purchaseType,
   dealerResponseStatus,
+  hasSubmittedQuote = false,
 }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -40,11 +46,19 @@ export default function DealerQuoteHeader({
       </div>
 
       <div className="mt-5">
-        <InfoNote>
-          Purchase Type is locked to the buyer request. Dealers should submit an
-          offer that matches the requested purchase structure while still being
-          free to offer a different vehicle configuration if needed.
-        </InfoNote>
+        {hasSubmittedQuote ? (
+          <InfoNote tone="amber">
+            A quote has already been submitted for this invitation. Under the
+            current v1 workflow, dealers may submit only one quote per request
+            per round.
+          </InfoNote>
+        ) : (
+          <InfoNote tone="blue">
+            Purchase Type is locked to the buyer request. Dealers should submit
+            an offer that matches the requested purchase structure while still
+            being free to offer a different vehicle configuration if needed.
+          </InfoNote>
+        )}
       </div>
     </div>
   );
