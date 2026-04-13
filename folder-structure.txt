@@ -19,6 +19,8 @@
 │   │   │   └── [requestId]
 │   │   │       ├── dealer-selection
 │   │   │       │   └── route.js
+│   │   │       ├── evaluate-round
+│   │   │       │   └── route.js
 │   │   │       ├── finalize-round1-send
 │   │   │       │   └── route.js
 │   │   │       ├── invitations
@@ -102,6 +104,7 @@
 │   │   ├── ManualOverridePanel.js
 │   │   ├── RequestWorkflowHeader.js
 │   │   ├── Round2SelectionPanel.js
+│   │   ├── RoundLifeCycleTestingPanel.js
 │   │   └── SendRfqPanel.js
 │   ├── review
 │   │   ├── BuyerDecisionPanel.js
@@ -139,6 +142,8 @@
 │   │   ├── reviewData.js
 │   │   ├── vehicleData.js
 │   │   └── workflowActions.js
+│   ├── config
+│   │   └── roundRules.js
 │   ├── constants
 │   │   └── creditScoreRanges.js
 │   ├── review
@@ -162,6 +167,7 @@
 │       ├── buildDealerCandidateSet.js
 │       ├── buildRound2CandidateSet.js
 │       ├── createRequestDealerRecords.js
+│       ├── evaluateRoundLifecycle.js
 │       ├── releaseDealerReviewLinks.js
 │       └── rfqPayloadBuilder.js
 ├── next.config.mjs

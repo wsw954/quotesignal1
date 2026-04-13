@@ -5,6 +5,8 @@ import { notFound, redirect } from "next/navigation";
 
 import {
   DEALER_SELECTION_STATUS,
+  evaluateAndCloseCurrentRound,
+  evaluateCurrentRoundLifecycle,
   getWorkflowSnapshot,
   markInvitationsCreated,
   markReadyForInvitations,
@@ -17,6 +19,7 @@ import DealerMatchTable from "@/components/ops/DealerMatchTable";
 import InvitationStatusTable from "@/components/ops/InvitationStatusTable";
 import SendRfqPanel from "@/components/ops/SendRfqPanel";
 import Round2SelectionPanel from "@/components/ops/Round2SelectionPanel";
+import RoundLifecycleTestingPanel from "@/components/ops/RoundLifeCycleTestingPanel";
 
 function normalizeRequestId(value) {
   return String(value || "")
@@ -147,6 +150,128 @@ async function generateInvitationsAction(formData) {
   redirect(destination);
 }
 
+async function evaluateRoundDryRunAction(formData) {
+  "use server";
+
+  const requestId = normalizeRequestId(formData.get("requestId"));
+
+  if (!requestId) {
+    redirect(
+      buildRedirectPath("UNKNOWN", {
+        phase8Action: "evaluate",
+        phase8Status: "error",
+        phase8Message: "Missing Request ID",
+      }),
+    );
+  }
+
+  let destination;
+
+  try {
+    const snapshot = await evaluateCurrentRoundLifecycle(requestId);
+    const lifecycle = snapshot?.lifecycle || {};
+    const config = lifecycle?.config || {};
+
+    revalidatePath(`/ops/requests/${requestId}`);
+
+    destination = buildRedirectPath(requestId, {
+      phase8Action: "evaluate",
+      phase8Status: "ok",
+      phase8Message: "Round lifecycle evaluated (dry run)",
+      lifecycleRound: snapshot?.currentRound || "",
+      lifecycleCloseReason: lifecycle?.closeReason || "none",
+      lifecycleShouldClose:
+        lifecycle?.flags?.shouldCloseRoundNow === true ? "yes" : "no",
+      lifecycleReviewReady:
+        lifecycle?.flags?.shouldEnableBuyerReview === true ? "yes" : "no",
+      lifecycleIsLive: lifecycle?.flags?.isRoundLive === true ? "yes" : "no",
+      lifecycleStartedAt: lifecycle?.timestamps?.startedAt || "",
+      lifecycleDeadlineAt: lifecycle?.timestamps?.deadlineAt || "",
+      lifecycleClosedAt: lifecycle?.timestamps?.closedAt || "",
+      lifecycleQuotedCount: lifecycle?.counts?.quotedInvitationCount ?? 0,
+      lifecycleCompliantCount: lifecycle?.counts?.compliantQuoteCount ?? 0,
+      lifecycleRuleset: config?.ruleset || "",
+      lifecycleMaxInvitedDealers: config?.maxInvitedDealers ?? "",
+      lifecycleEarlyCloseQuoteCount: config?.earlyCloseQuoteCount ?? "",
+      lifecycleRoundWindowHours: config?.roundWindowHours ?? "",
+    });
+  } catch (error) {
+    destination = buildRedirectPath(requestId, {
+      phase8Action: "evaluate",
+      phase8Status: "error",
+      phase8Message: error?.message || "Failed to evaluate round lifecycle",
+    });
+  }
+
+  redirect(destination);
+}
+
+async function evaluateAndCloseRoundAction(formData) {
+  "use server";
+
+  const requestId = normalizeRequestId(formData.get("requestId"));
+
+  if (!requestId) {
+    redirect(
+      buildRedirectPath("UNKNOWN", {
+        phase8Action: "close",
+        phase8Status: "error",
+        phase8Message: "Missing Request ID",
+      }),
+    );
+  }
+
+  let destination;
+
+  try {
+    const result = await evaluateAndCloseCurrentRound(requestId);
+    const lifecycle = result?.lifecycle || {};
+    const config = lifecycle?.config || {};
+    const status = result?.status || "evaluated";
+
+    revalidatePath(`/ops/requests/${requestId}`);
+
+    destination = buildRedirectPath(requestId, {
+      phase8Action: "close",
+      phase8Status: "ok",
+      phase8Message:
+        status === "closed"
+          ? "Round lifecycle evaluated and current round closed"
+          : status === "still-open"
+            ? "Round lifecycle evaluated; current round remains open"
+            : status === "not-eligible"
+              ? "Round lifecycle not eligible for evaluation/close"
+              : "Round lifecycle processed",
+      lifecycleResultStatus: status,
+      lifecycleRound: result?.snapshot?.currentRound || "",
+      lifecycleCloseReason:
+        result?.closeReason || lifecycle?.closeReason || "none",
+      lifecycleShouldClose:
+        lifecycle?.flags?.shouldCloseRoundNow === true ? "yes" : "no",
+      lifecycleReviewReady:
+        lifecycle?.flags?.shouldEnableBuyerReview === true ? "yes" : "no",
+      lifecycleIsLive: lifecycle?.flags?.isRoundLive === true ? "yes" : "no",
+      lifecycleStartedAt: lifecycle?.timestamps?.startedAt || "",
+      lifecycleDeadlineAt: lifecycle?.timestamps?.deadlineAt || "",
+      lifecycleClosedAt: lifecycle?.timestamps?.closedAt || "",
+      lifecycleQuotedCount: lifecycle?.counts?.quotedInvitationCount ?? 0,
+      lifecycleCompliantCount: lifecycle?.counts?.compliantQuoteCount ?? 0,
+      lifecycleRuleset: config?.ruleset || "",
+      lifecycleMaxInvitedDealers: config?.maxInvitedDealers ?? "",
+      lifecycleEarlyCloseQuoteCount: config?.earlyCloseQuoteCount ?? "",
+      lifecycleRoundWindowHours: config?.roundWindowHours ?? "",
+    });
+  } catch (error) {
+    destination = buildRedirectPath(requestId, {
+      phase8Action: "close",
+      phase8Status: "error",
+      phase8Message: error?.message || "Failed to evaluate and close round",
+    });
+  }
+
+  redirect(destination);
+}
+
 function DetailRow({ label, value }) {
   return (
     <div className="flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-3">
@@ -164,11 +289,13 @@ function ActionResultBanner({ flash }) {
   const isSuccess = flash.status === "ok";
 
   const eyebrow =
-    flash.phase === "phase6"
-      ? "Round 1 Send Ready Result"
-      : flash.action === "ready"
-        ? "Invitation Prep Result"
-        : "Invitation Creation Result";
+    flash.phase === "phase8"
+      ? "Round Lifecycle Test Result"
+      : flash.phase === "phase6"
+        ? "Round 1 Send Ready Result"
+        : flash.action === "ready"
+          ? "Invitation Prep Result"
+          : "Invitation Creation Result";
 
   return (
     <section
@@ -196,6 +323,118 @@ function ActionResultBanner({ flash }) {
             {flash.message}
           </h2>
         </div>
+
+        {flash.phase === "phase8" && isSuccess ? (
+          <div className="grid gap-3 md:grid-cols-4">
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Ruleset
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleRuleset || "—"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Max Invited
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleMaxInvitedDealers || "—"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Early Close Quotes
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleEarlyCloseQuoteCount || "—"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Window Hours
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleRoundWindowHours || "—"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Round
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleRound || "—"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Result
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleResultStatus || "evaluated"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Close Reason
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleCloseReason || "none"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Buyer Review Ready
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleReviewReady || "no"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Round Live
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleIsLive || "no"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Should Close Now
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleShouldClose || "no"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Quoted Invitations
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleQuotedCount}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Compliant Quotes
+              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">
+                {flash.lifecycleCompliantCount}
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         {flash.phase === "phase6" && isSuccess ? (
           <div className="grid gap-3 md:grid-cols-4">
@@ -484,6 +723,33 @@ function InvitationActionsPanel({ requestData, workflowSnapshot }) {
 }
 
 function buildFlashState(searchParams) {
+  const phase8Action = readParam(searchParams?.phase8Action);
+  const phase8Status = readParam(searchParams?.phase8Status);
+
+  if (phase8Action && phase8Status) {
+    return {
+      phase: "phase8",
+      action: phase8Action,
+      status: phase8Status,
+      message: readParam(searchParams?.phase8Message) || "Action completed",
+      lifecycleResultStatus: readParam(searchParams?.lifecycleResultStatus),
+      lifecycleRound: readParam(searchParams?.lifecycleRound),
+      lifecycleCloseReason: readParam(searchParams?.lifecycleCloseReason),
+      lifecycleShouldClose: readParam(searchParams?.lifecycleShouldClose),
+      lifecycleReviewReady: readParam(searchParams?.lifecycleReviewReady),
+      lifecycleIsLive: readParam(searchParams?.lifecycleIsLive),
+      lifecycleStartedAt: readParam(searchParams?.lifecycleStartedAt),
+      lifecycleDeadlineAt: readParam(searchParams?.lifecycleDeadlineAt),
+      lifecycleClosedAt: readParam(searchParams?.lifecycleClosedAt),
+      lifecycleQuotedCount: Number(
+        readParam(searchParams?.lifecycleQuotedCount) || 0,
+      ),
+      lifecycleCompliantCount: Number(
+        readParam(searchParams?.lifecycleCompliantCount) || 0,
+      ),
+    };
+  }
+
   const phase6Action = readParam(searchParams?.phase6Action);
   const phase6Status = readParam(searchParams?.phase6Status);
 
@@ -703,6 +969,13 @@ export default async function OpsRequestWorkflowPage({ params, searchParams }) {
             />
           </div>
         </section>
+
+        <RoundLifecycleTestingPanel
+          requestData={requestData}
+          workflowSnapshot={workflowSnapshot}
+          onEvaluateDryRun={evaluateRoundDryRunAction}
+          onEvaluateAndClose={evaluateAndCloseRoundAction}
+        />
 
         <DealerSelectionPanel
           requestData={requestData}
